@@ -29,8 +29,8 @@ import (
 	"github.com/tkrajina/go-reflector/reflector"
 	"golang.org/x/net/html"
 	// "github.com/nathanleary/convnet"
+	"github.com/nathanleary/js/php2go"
 	"github.com/spf13/cast"
-	"github.com/syyongx/php2go"
 	"github.com/valyala/fasthttp"
 )
 import (
