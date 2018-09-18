@@ -1109,7 +1109,7 @@ func Rand(min, max int) int {
 		panic("min: min cannot be greater than max")
 	}
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	n := r.Intn(math.MaxInt32 - 1)
+	n := r.Intn(math.MaxInt32 - 2)
 	return n/((math.MaxInt32-1)/(max-min+1)) + min
 }
 
