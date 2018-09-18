@@ -26,7 +26,6 @@ import (
 	"github.com/dop251/goja"
 	"github.com/gocolly/colly"
 	"github.com/mfonda/simhash"
-	"github.com/tkrajina/go-reflector/reflector"
 	"golang.org/x/net/html"
 	// "github.com/nathanleary/convnet"
 	"github.com/nathanleary/js/php2go"
@@ -41,6 +40,7 @@ import (
 	"log"
 
 	"github.com/nfnt/resize"
+	"github.com/tkrajina/go-reflector/reflector"
 )
 
 var model *autocomplete = new(autocomplete)
