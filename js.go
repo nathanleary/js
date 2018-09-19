@@ -36,11 +36,13 @@ import (
 import (
 	"image"
 	"image/color"
+	"image/gif"
 	"image/jpeg"
 	"image/png"
 	"log"
 
 	"github.com/nfnt/resize"
+	"golang.org/x/image/bmp"
 )
 
 var model *autocomplete = new(autocomplete)
@@ -1119,7 +1121,33 @@ func main() {
 	registeredJSMethods["os.Chown"] = os.Chown
 	registeredJSMethods["os.Chdir"] = os.Chdir
 	registeredJSMethods["os.MkdirAll"] = os.MkdirAll
-	registeredJSMethods["resize_img"] = func(width uint, height uint, srcPath string, destPath string) {
+	registeredJSMethods["save_image"] = func(img image.Image, destPath string, qualityOrNumColors int) {
+		out, err := os.Create(destPath)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer out.Close()
+
+		// write new image to file
+		if strings.Contains(strings.ToLower(destPath), ".png") && (strings.Split(strings.ToLower(destPath), ".png")[1]) == "" {
+			png.Encode(out, img)
+		} else if strings.Contains(strings.ToLower(destPath), ".gif") && (strings.Split(strings.ToLower(destPath), ".gif")[1]) == "" {
+			O := new(gif.Options)
+			if qualityOrNumColors > 0 {
+				O.NumColors = qualityOrNumColors
+			}
+			gif.Encode(out, img, O)
+		} else if strings.Contains(strings.ToLower(destPath), ".bmp") && (strings.Split(strings.ToLower(destPath), ".bmp")[1]) == "" {
+			bmp.Encode(out, img)
+		} else {
+			O := new(jpeg.Options)
+			if qualityOrNumColors > 0 {
+				O.Quality = qualityOrNumColors
+			}
+			jpeg.Encode(out, img, O)
+		}
+	}
+	registeredJSMethods["open_image"] = func(srcPath string) image.Image {
 		// open "test.jpg"
 		file, err := os.Open(srcPath)
 		if err != nil {
@@ -1130,6 +1158,10 @@ func main() {
 		// decode jpeg into image.Image
 		if strings.Contains(strings.ToLower(srcPath), ".png") && (strings.Split(strings.ToLower(srcPath), ".png")[1]) == "" {
 			img, err = png.Decode(file)
+		} else if strings.Contains(strings.ToLower(srcPath), ".gif") && (strings.Split(strings.ToLower(srcPath), ".gif")[1]) == "" {
+			img, err = gif.Decode(file)
+		} else if strings.Contains(strings.ToLower(srcPath), ".bmp") && (strings.Split(strings.ToLower(srcPath), ".bmp")[1]) == "" {
+			img, err = bmp.Decode(file)
 		} else {
 			img, err = jpeg.Decode(file)
 		}
@@ -1138,69 +1170,97 @@ func main() {
 		}
 		file.Close()
 
+		return img
+
+	}
+	registeredJSMethods["resize_image"] = func(width uint, height uint, img image.Image) image.Image {
+		// open "test.jpg"
+		// file, err := os.Open(srcPath)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// var img image.Image
+
+		// decode jpeg into image.Image
+		// if strings.Contains(strings.ToLower(srcPath), ".png") && (strings.Split(strings.ToLower(srcPath), ".png")[1]) == "" {
+		// 	img, err = png.Decode(file)
+		// } else {
+		// 	img, err = jpeg.Decode(file)
+		// }
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// file.Close()
+
 		// resize to width 1000 using Lanczos resampling
 		// and preserve aspect ratio
-		m := resize.Resize(width, height, img, resize.Lanczos3)
+		return resize.Resize(width, height, img, resize.Lanczos3)
 
-		out, err := os.Create(destPath)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer out.Close()
+		// out, err := os.Create(destPath)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
+		// defer out.Close()
 
-		// write new image to file
-		if strings.Contains(strings.ToLower(destPath), ".png") && (strings.Split(strings.ToLower(destPath), ".png")[1]) == "" {
-			png.Encode(out, m)
-		} else {
-			jpeg.Encode(out, m, nil)
-		}
+		// // write new image to file
+		// if strings.Contains(strings.ToLower(destPath), ".png") && (strings.Split(strings.ToLower(destPath), ".png")[1]) == "" {
+		// 	png.Encode(out, m)
+		// } else {
+		// 	jpeg.Encode(out, m, nil)
+		// }
 	}
 
-	registeredJSMethods["img_to_array"] = func(path string) [][][]uint8 {
+	registeredJSMethods["image_to_array"] = func(img image.Image) [][][]uint8 {
 		// Create an 100 x 50 image
 		// You can register another format here
 
-		image.RegisterFormat("png", "png", png.Decode, png.DecodeConfig)
+		// image.RegisterFormat("png", "png", png.Decode, png.DecodeConfig)
 
-		file, err := os.Open(path)
+		// file, err := os.Open(path)
 
-		if err != nil {
+		// if err != nil {
 
-		} else {
+		// } else {
 
-			defer file.Close()
+		// defer file.Close()
 
-			pixels, err := getPixels(file)
+		bounds := img.Bounds()
+		width, height := bounds.Max.X, bounds.Max.Y
 
-			if err != nil {
-
-			} else {
-
-				arr := [][][]uint8{}
-				for y := 0; y < len(pixels); y++ {
-					arr = append(arr, [][]uint8{})
-					for x := 0; x < len(pixels[y]); x++ {
-						arr[y] = append(arr[y], []uint8{})
-
-						arr[y][x] = append(arr[y][x], uint8(pixels[y][x].R))
-						arr[y][x] = append(arr[y][x], uint8(pixels[y][x].G))
-						arr[y][x] = append(arr[y][x], uint8(pixels[y][x].B))
-						arr[y][x] = append(arr[y][x], uint8(pixels[y][x].A))
-
-					}
-				}
-				return arr
+		var pixels [][]Pixel
+		for y := 0; y < height; y++ {
+			var row []Pixel
+			for x := 0; x < width; x++ {
+				row = append(row, rgbaToPixel(img.At(x, y).RGBA()))
 			}
+			pixels = append(pixels, row)
 		}
 
-		return [][][]uint8{}
+		arr := [][][]uint8{}
+		for y := 0; y < len(pixels); y++ {
+			arr = append(arr, [][]uint8{})
+			for x := 0; x < len(pixels[y]); x++ {
+				arr[y] = append(arr[y], []uint8{})
+
+				arr[y][x] = append(arr[y][x], uint8(pixels[y][x].R))
+				arr[y][x] = append(arr[y][x], uint8(pixels[y][x].G))
+				arr[y][x] = append(arr[y][x], uint8(pixels[y][x].B))
+				arr[y][x] = append(arr[y][x], uint8(pixels[y][x].A))
+
+			}
+		}
+		return arr
+
+		// }
 
 	}
 
-	registeredJSMethods["array_to_img"] = func(arr [][][]uint8, path string) {
+	registeredJSMethods["array_to_image"] = func(arr [][][]uint8) image.Image {
 		// Create an 100 x 50 image
 		w := 0
 		h := len(arr)
+
+		var img *image.RGBA
 
 		for y := 0; y < len(arr); y++ {
 			for x := 0; x < len(arr[y]); x++ {
@@ -1211,7 +1271,7 @@ func main() {
 
 		}
 
-		img := image.NewRGBA(image.Rect(0, 0, w, h))
+		img = image.NewRGBA(image.Rect(0, 0, w, h))
 		for y := 0; y < len(arr); y++ {
 			for x := 0; x < len(arr[y]); x++ {
 
@@ -1223,13 +1283,15 @@ func main() {
 		}
 
 		// Save to out.png
-		f, _ := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0600)
-		defer f.Close()
-		if strings.Contains(strings.ToLower(path), ".png") && (strings.Split(strings.ToLower(path), ".png")[1]) == "" {
-			png.Encode(f, img)
-		} else {
-			jpeg.Encode(f, img, nil)
-		}
+		// f, _ := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0600)
+		// defer f.Close()
+		// if strings.Contains(strings.ToLower(path), ".png") && (strings.Split(strings.ToLower(path), ".png")[1]) == "" {
+		// 	png.Encode(f, img)
+		// } else {
+		// 	jpeg.Encode(f, img, nil)
+		// }
+
+		return img.SubImage(image.Rect(0, 0, w, h))
 
 	}
 	registeredJSMethods["os.Mkdir"] = os.Mkdir
