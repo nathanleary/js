@@ -918,37 +918,37 @@ func (model *autocomplete) Remember(input string, GuessTheshold uint8, searchAll
 				exactFilePath, _ := filepath.Abs(model.dirfile + "/" + fold + "/" + hash)
 				exactFilePathDir, _ := filepath.Abs(model.dirfile + "/" + fold)
 
-				model.LoadMicro(exactFilePath, ref)
+				// model.LoadMicro(exactFilePath, ref)
 
-				if _, ok3 := model.data[ref]; ok3 {
-					//fmt.Println(model.data[ref])
-					if sug, ok := model.data[ref][input]; ok {
-						//					fmt.Println(model.data[ref][input])
-						for phrase, score := range sug {
+				// if _, ok3 := model.data[ref]; ok3 {
+				// 	//fmt.Println(model.data[ref])
+				// 	if sug, ok := model.data[ref][input]; ok {
+				// 		//					fmt.Println(model.data[ref][input])
+				// 		for phrase, score := range sug {
 
-							totalScore = score + totalScore
+				// 			totalScore = score + totalScore
 
-							// if score >= bestScore {
+				// 			// if score >= bestScore {
 
-							bestPhrase = phrase
-							bestScore = score
+				// 			bestPhrase = phrase
+				// 			bestScore = score
 
-							if s, ok := scoremsi[bestPhrase]; ok {
-								scoremsi[bestPhrase] = score + s
-							} else {
-								scoremsi[bestPhrase] = score
-							}
+				// 			if s, ok := scoremsi[bestPhrase]; ok {
+				// 				scoremsi[bestPhrase] = score + s
+				// 			} else {
+				// 				scoremsi[bestPhrase] = score
+				// 			}
 
-							// }
+				// 			// }
 
-						}
+				// 		}
 
-					}
-				}
+				// 	}
+				// }
 
-				model.Forget(ref)
+				// model.Forget(ref)
 
-				if bestPhrase == "" && searchAll != true {
+				if searchAll != true {
 					filepath.Walk(exactFilePathDir, func(path string, info os.FileInfo, err error) error {
 						if bestPhrase == "" {
 							path, _ = filepath.Abs(path)
@@ -1004,74 +1004,74 @@ func (model *autocomplete) Remember(input string, GuessTheshold uint8, searchAll
 					})
 
 				}
-				if bestPhrase == "" && searchAll != true {
-					filepath.Walk(model.dirfile+"/", func(foldPath string, foldPathInfo os.FileInfo, foldPathErr error) error {
+				// if bestPhrase == "" && searchAll != true {
+				// 	filepath.Walk(model.dirfile+"/", func(foldPath string, foldPathInfo os.FileInfo, foldPathErr error) error {
 
-						if bestPhrase == "" {
-							foldPath, _ = filepath.Abs(foldPath)
-							if foldPath != exactFilePathDir {
-								//fmt.Println(foldPath)
-								filepath.Walk(foldPath, func(path string, info os.FileInfo, err error) error {
-									if bestPhrase == "" {
-										path, _ = filepath.Abs(path)
-										if path != exactFilePath {
+				// 		if bestPhrase == "" {
+				// 			foldPath, _ = filepath.Abs(foldPath)
+				// 			if foldPath != exactFilePathDir {
+				// 				//fmt.Println(foldPath)
+				// 				filepath.Walk(foldPath, func(path string, info os.FileInfo, err error) error {
+				// 					if bestPhrase == "" {
+				// 						path, _ = filepath.Abs(path)
+				// 						if path != exactFilePath {
 
-											ref := ""
+				// 							ref := ""
 
-											for t := 0; t <= 15; t++ {
-												if len(input) >= t {
-													ref = input[:t]
-												}
-											}
+				// 							for t := 0; t <= 15; t++ {
+				// 								if len(input) >= t {
+				// 									ref = input[:t]
+				// 								}
+				// 							}
 
-											//	fmt.Println(path)
-											model.LoadMicro(path, ref)
+				// 							//	fmt.Println(path)
+				// 							model.LoadMicro(path, ref)
 
-											if _, ok3 := model.data[ref]; ok3 {
-												//fmt.Println(model.data[ref])
-												for inp, _ := range model.data[ref] {
-													if sug, ok := model.data[ref][inp]; ok {
-														//					fmt.Println(model.data[ref][input])
+				// 							if _, ok3 := model.data[ref]; ok3 {
+				// 								//fmt.Println(model.data[ref])
+				// 								for inp, _ := range model.data[ref] {
+				// 									if sug, ok := model.data[ref][inp]; ok {
+				// 										//					fmt.Println(model.data[ref][input])
 
-														if model.HashCompare(inputhash, model.Hash(inp)) <= GuessTheshold {
+				// 										if model.HashCompare(inputhash, model.Hash(inp)) <= GuessTheshold {
 
-															for phrase, score := range sug {
+				// 											for phrase, score := range sug {
 
-																totalScore = score + totalScore
+				// 												totalScore = score + totalScore
 
-																// if score >= bestScore {
+				// 												// if score >= bestScore {
 
-																bestPhrase = phrase
-																bestScore = score
+				// 												bestPhrase = phrase
+				// 												bestScore = score
 
-																if s, ok := scoremsi[bestPhrase]; ok {
-																	scoremsi[bestPhrase] = score + s
-																} else {
-																	scoremsi[bestPhrase] = score
-																}
+				// 												if s, ok := scoremsi[bestPhrase]; ok {
+				// 													scoremsi[bestPhrase] = score + s
+				// 												} else {
+				// 													scoremsi[bestPhrase] = score
+				// 												}
 
-																// }
+				// 												// }
 
-															}
-														}
+				// 											}
+				// 										}
 
-													}
-												}
-											}
+				// 									}
+				// 								}
+				// 							}
 
-											model.Forget(ref)
-										}
+				// 							model.Forget(ref)
+				// 						}
 
-									}
-									return nil
-								})
-							}
+				// 					}
+				// 					return nil
+				// 				})
+				// 			}
 
-						}
-						return nil
-					})
+				// 		}
+				// 		return nil
+				// 	})
 
-				}
+				// }
 
 				if searchAll == true {
 					filepath.Walk(model.dirfile+"/", func(foldPath string, foldPathInfo os.FileInfo, foldPathErr error) error {
