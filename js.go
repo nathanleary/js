@@ -89,12 +89,21 @@ func (model *autocomplete) New(dir string) {
 	model.data = make(map[string]map[string]map[string]int)
 }
 
+var forgetQueue []string = []string{}
+
 func (model *autocomplete) Forget(ref string) {
-	if model.data == nil {
-		model.New(model.dirfile)
+
+	if len(forgetQueue) > 15 { // not sure how big the forget que should be
+
+		if model.data == nil {
+			model.New(model.dirfile)
+		}
+		ref = forgetQueue[0]
+		forgetQueue = forgetQueue[1:]
+
+		model.data[ref] = nil
 	}
 
-	model.data[ref] = nil
 }
 
 func (model *autocomplete) SaveMicro(path string, ref string) {
@@ -117,37 +126,51 @@ func (model *autocomplete) SaveMicro(path string, ref string) {
 }
 
 func (model *autocomplete) LoadMicro(path string, ref string) {
-	//	fmt.Println(path)
-	model.New(model.dirfile)
-	dat, err := ioutil.ReadFile(path)
-	mdf := make(map[string]map[string]int)
-	if err == nil {
 
-		var network bytes.Buffer // Stand-in for a network connection
-		//enc := gob.NewEncoder(&network) // Will write to network.
-		dec := gob.NewDecoder(&network) // Will read from network.
+	hasFoundRef := false
 
-		//dec := gob.NewDecoder(&network)
-		network.Write(dat)
-		mut.Lock()
+	for x := 0; x < len(forgetQueue); x++ {
+		if ref == forgetQueue[x] {
+			hasFoundRef = true
+			forgetQueue = append(forgetQueue[:x], forgetQueue[x+1:]...)
 
-		err = dec.Decode(&mdf)
-		//model.data[ref] = mdf
+			x = len(forgetQueue) + 1
+		}
+	}
+	forgetQueue = append(forgetQueue, ref)
 
-		mut.Unlock()
-		if err != nil {
+	if !hasFoundRef {
+		//	fmt.Println(path)
+		model.New(model.dirfile)
+		dat, err := ioutil.ReadFile(path)
+		mdf := make(map[string]map[string]int)
+		if err == nil {
+
+			var network bytes.Buffer // Stand-in for a network connection
+			//enc := gob.NewEncoder(&network) // Will write to network.
+			dec := gob.NewDecoder(&network) // Will read from network.
+
+			//dec := gob.NewDecoder(&network)
+			network.Write(dat)
+			mut.Lock()
+
+			err = dec.Decode(&mdf)
+			//model.data[ref] = mdf
+
+			mut.Unlock()
+			if err != nil {
+				// model.Update(ref, nil)
+				// model.SaveMicro(path, ref)
+			}
+
+		} else if err != nil {
 			// model.Update(ref, nil)
 			// model.SaveMicro(path, ref)
+
 		}
 
-	} else if err != nil {
-		// model.Update(ref, nil)
-		// model.SaveMicro(path, ref)
-
+		model.Update(ref, mdf)
 	}
-
-	model.Update(ref, mdf)
-
 }
 
 func (model *autocomplete) Update(ref string, data map[string]map[string]int) {
@@ -160,6 +183,7 @@ func (model *autocomplete) Update(ref string, data map[string]map[string]int) {
 	if data == nil {
 		//		model.Forget(ref)
 	} else {
+
 		// model.data[ref] = data
 
 		// for i := 0; i < len(models); i++ {
@@ -931,6 +955,13 @@ func (model *autocomplete) Remember(input string, GuessTheshold uint8, searchAll
 							if path != exactFilePath {
 
 								//	fmt.Println(path)
+								ref := ""
+
+								for t := 0; t <= 15; t++ {
+									if len(input) >= t {
+										ref = input[:t]
+									}
+								}
 
 								model.LoadMicro(path, ref)
 
@@ -984,6 +1015,15 @@ func (model *autocomplete) Remember(input string, GuessTheshold uint8, searchAll
 									if bestPhrase == "" {
 										path, _ = filepath.Abs(path)
 										if path != exactFilePath {
+
+											ref := ""
+
+											for t := 0; t <= 15; t++ {
+												if len(input) >= t {
+													ref = input[:t]
+												}
+											}
+
 											//	fmt.Println(path)
 											model.LoadMicro(path, ref)
 
@@ -1038,6 +1078,14 @@ func (model *autocomplete) Remember(input string, GuessTheshold uint8, searchAll
 
 						//fmt.Println(foldPath)
 						filepath.Walk(foldPath, func(path string, info os.FileInfo, err error) error {
+
+							ref := ""
+
+							for t := 0; t <= 15; t++ {
+								if len(input) >= t {
+									ref = input[:t]
+								}
+							}
 
 							//	fmt.Println(path)
 							model.LoadMicro(path, ref)
