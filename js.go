@@ -495,6 +495,8 @@ func (model *autocomplete) Learn(inputs []string, specificAnswers []string) {
 		sync.Add(1)
 		go func(i int, input, specificAnswer string) {
 
+			defer sync.Done()
+
 			tempmodel := autocomplete{}
 			tempmodel.New(model.dirfile)
 			tempRef := ""
@@ -573,7 +575,6 @@ func (model *autocomplete) Learn(inputs []string, specificAnswers []string) {
 
 			}
 
-			sync.Done()
 		}(len(models)-1, input, spa)
 
 		//}
