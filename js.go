@@ -465,7 +465,7 @@ func (model *autocomplete) Learn(inputsInterface interface{}, specificAnswersInt
 	}
 
 	if i, ok := specificAnswersInterface.(string); ok {
-		specificAnswers = append(inputs, i)
+		specificAnswers = append(specificAnswers, i)
 	} else if i, ok := specificAnswersInterface.([]string); ok {
 		specificAnswers = i
 	}
