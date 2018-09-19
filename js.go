@@ -1036,54 +1036,48 @@ func (model *autocomplete) Remember(input string, GuessTheshold uint8, searchAll
 				if searchAll == true {
 					filepath.Walk(model.dirfile+"/", func(foldPath string, foldPathInfo os.FileInfo, foldPathErr error) error {
 
-						foldPath, _ = filepath.Abs(foldPath)
-						if foldPath != exactFilePathDir {
-							//fmt.Println(foldPath)
-							filepath.Walk(foldPath, func(path string, info os.FileInfo, err error) error {
+						//fmt.Println(foldPath)
+						filepath.Walk(foldPath, func(path string, info os.FileInfo, err error) error {
 
-								path, _ = filepath.Abs(path)
-								if path != exactFilePath {
-									//	fmt.Println(path)
-									model.LoadMicro(path, ref)
+							//	fmt.Println(path)
+							model.LoadMicro(path, ref)
 
-									if _, ok3 := model.data[ref]; ok3 {
-										//fmt.Println(model.data[ref])
-										for inp, _ := range model.data[ref] {
-											if sug, ok := model.data[ref][inp]; ok {
-												//					fmt.Println(model.data[ref][input])
+							if _, ok3 := model.data[ref]; ok3 {
+								//fmt.Println(model.data[ref])
+								for inp, _ := range model.data[ref] {
+									if sug, ok := model.data[ref][inp]; ok {
+										//					fmt.Println(model.data[ref][input])
 
-												if model.HashCompare(inputhash, model.Hash(inp)) <= GuessTheshold {
+										if model.HashCompare(inputhash, model.Hash(inp)) <= GuessTheshold {
 
-													for phrase, score := range sug {
+											for phrase, score := range sug {
 
-														totalScore = score + totalScore
+												totalScore = score + totalScore
 
-														if score >= bestScore {
+												if score >= bestScore {
 
-															bestPhrase = phrase
-															bestScore = score
+													bestPhrase = phrase
+													bestScore = score
 
-															if s, ok := scoremsi[bestPhrase]; ok {
-																scoremsi[bestPhrase] = score + s
-															} else {
-																scoremsi[bestPhrase] = score
-															}
-
-														}
-
+													if s, ok := scoremsi[bestPhrase]; ok {
+														scoremsi[bestPhrase] = score + s
+													} else {
+														scoremsi[bestPhrase] = score
 													}
+
 												}
 
 											}
 										}
+
 									}
-
-									model.Forget(ref)
 								}
+							}
 
-								return nil
-							})
-						}
+							model.Forget(ref)
+
+							return nil
+						})
 
 						return nil
 					})
