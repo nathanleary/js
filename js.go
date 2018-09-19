@@ -93,7 +93,7 @@ var forgetQueue []string = []string{}
 
 func (model *autocomplete) Forget(ref string) {
 
-	if len(forgetQueue) > 15 { // not sure how big the forget que should be
+	if len(forgetQueue) > 150 { // not sure how big the forget que should be
 
 		if model.data == nil {
 			model.New(model.dirfile)
