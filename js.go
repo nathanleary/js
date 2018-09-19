@@ -1191,7 +1191,7 @@ func sayHello(ctx *fasthttp.RequestCtx) {
 		//			}
 		//		}
 
-		suggested := stringify(model.Remember(btext))
+		suggested := stringify(model.Remember(btext, 0))
 		// fmt.Println(btext, os.Args[1]+"/"+md5[:3]+"/"+md5[3:7]+"/"+md5[7:])
 		//		model.Forget(ref)
 
