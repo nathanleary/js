@@ -476,6 +476,7 @@ func (model *autocomplete) Learn(inputsInterface interface{}, specificAnswersInt
 	if i, ok := specificAnswersInterface.(string); ok {
 		specificAnswers = append(specificAnswers, i)
 	}
+
 	if i2, ok := specificAnswersInterface.([]string); ok {
 		specificAnswers = i2
 	}
@@ -485,7 +486,7 @@ func (model *autocomplete) Learn(inputsInterface interface{}, specificAnswersInt
 			specificAnswers = append(specificAnswers, i3.Get(k).String())
 		}
 	}
-
+	fmt.Println(reflect.TypeOf(specificAnswersInterface))
 	var sync *sync.WaitGroup = new(sync.WaitGroup)
 
 	models := []autocomplete{}
