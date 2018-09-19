@@ -453,7 +453,22 @@ func (model *autocomplete) PunishMicro(input string, folderPath string, specific
 
 }
 
-func (model *autocomplete) Learn(inputs []string, specificAnswers []string) {
+func (model *autocomplete) Learn(inputsInterface interface{}, specificAnswersInterface interface{}) {
+
+	inputs := []string{}
+	specificAnswers := []string{}
+
+	if i, ok := inputsInterface.(string); ok {
+		inputs = append(inputs, i)
+	} else if i, ok := inputsInterface.([]string); ok {
+		inputs = i
+	}
+
+	if i, ok := specificAnswersInterface.(string); ok {
+		specificAnswers = append(inputs, i)
+	} else if i, ok := specificAnswersInterface.([]string); ok {
+		specificAnswers = i
+	}
 
 	var sync sync.WaitGroup = sync.WaitGroup{}
 	models := []autocomplete{}
