@@ -1102,18 +1102,18 @@ func (model *autocomplete) Remember(input string, GuessTheshold uint8, searchAll
 
 												totalScore = score + totalScore
 
-												if score >= bestScore {
+												// if score >= bestScore {
 
-													bestPhrase = phrase
-													bestScore = score
+												bestPhrase = phrase
+												bestScore = score
 
-													if s, ok := scoremsi[bestPhrase]; ok {
-														scoremsi[bestPhrase] = score + s
-													} else {
-														scoremsi[bestPhrase] = score
-													}
-
+												if s, ok := scoremsi[bestPhrase]; ok {
+													scoremsi[bestPhrase] = score + s
+												} else {
+													scoremsi[bestPhrase] = score
 												}
+
+												// }
 
 											}
 										}
