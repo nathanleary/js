@@ -792,7 +792,7 @@ func (model *autocomplete) IsDir(name string) bool {
 	return false
 }
 
-func (model *autocomplete) Remember(input string) map[string]int {
+func (model *autocomplete) Remember(input string, GuessTheshold uint8) map[string]int {
 
 	ref := ""
 
@@ -831,33 +831,77 @@ func (model *autocomplete) Remember(input string) map[string]int {
 			fold := fmt.Sprint(model.HashCompare("", hash))
 
 			// fmt.Println(ref, md5)
-			model.LoadMicro(model.dirfile+"/"+fold+"/"+hash, ref)
 
-			if _, ok3 := model.data[ref]; ok3 {
-				//fmt.Println(model.data[ref])
-				if sug, ok := model.data[ref][input]; ok {
-					//					fmt.Println(model.data[ref][input])
-					for phrase, score := range sug {
+			if GuessTheshold > 0 {
 
-						totalScore = score + totalScore
+				inputhash := model.Hash(input)
+				if _, ok3 := model.data[ref]; ok3 {
+					//fmt.Println(model.data[ref])
+					for inp, _ := range model.data[ref] {
+						if sug, ok := model.data[ref][inp]; ok {
+							//					fmt.Println(model.data[ref][input])
+							filepath.Walk(model.dirfile+"/"+fold+"/", func(path string, info os.FileInfo, err error) error {
+								model.LoadMicro(path, ref)
+								return nil
+							})
 
-						if score >= bestScore {
+							if model.HashCompare(inputhash, model.Hash(inp)) <= GuessTheshold {
 
-							bestPhrase = phrase
-							bestScore = score
+								for phrase, score := range sug {
 
-							if s, ok := scoremsi[bestPhrase]; ok {
-								scoremsi[bestPhrase] = score + s
-							} else {
-								scoremsi[bestPhrase] = score
+									totalScore = score + totalScore
+
+									if score >= bestScore {
+
+										bestPhrase = phrase
+										bestScore = score
+
+										if s, ok := scoremsi[bestPhrase]; ok {
+											scoremsi[bestPhrase] = score + s
+										} else {
+											scoremsi[bestPhrase] = score
+										}
+
+									}
+
+								}
+							}
+
+						}
+					}
+				}
+			} else {
+
+				model.LoadMicro(model.dirfile+"/"+fold+"/"+hash, ref)
+
+				if _, ok3 := model.data[ref]; ok3 {
+					//fmt.Println(model.data[ref])
+					if sug, ok := model.data[ref][input]; ok {
+						//					fmt.Println(model.data[ref][input])
+						for phrase, score := range sug {
+
+							totalScore = score + totalScore
+
+							if score >= bestScore {
+
+								bestPhrase = phrase
+								bestScore = score
+
+								if s, ok := scoremsi[bestPhrase]; ok {
+									scoremsi[bestPhrase] = score + s
+								} else {
+									scoremsi[bestPhrase] = score
+								}
+
 							}
 
 						}
 
 					}
-
 				}
+
 			}
+
 			model.Forget(ref)
 		}
 		if bestPhrase != "" {
