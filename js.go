@@ -486,6 +486,7 @@ func (model *autocomplete) Learn(inputsInterface interface{}, specificAnswersInt
 			specificAnswers = append(specificAnswers, i3.Get(k).String())
 		}
 	}
+
 	fmt.Println(reflect.TypeOf(specificAnswersInterface))
 	var sync *sync.WaitGroup = new(sync.WaitGroup)
 
