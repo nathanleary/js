@@ -470,7 +470,8 @@ func (model *autocomplete) Learn(inputsInterface interface{}, specificAnswersInt
 		specificAnswers = i
 	}
 
-	var sync sync.WaitGroup = sync.WaitGroup{}
+	var sync *sync.WaitGroup = new(sync.WaitGroup)
+
 	models := []autocomplete{}
 	//input = strings.TrimSpace(input)
 	//	input = strings.Replace(input, vectorString+vectorString+vectorString, vectorString, -1)
