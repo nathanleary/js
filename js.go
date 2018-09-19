@@ -460,14 +460,30 @@ func (model *autocomplete) Learn(inputsInterface interface{}, specificAnswersInt
 
 	if i, ok := inputsInterface.(string); ok {
 		inputs = append(inputs, i)
-	} else if i, ok := inputsInterface.([]string); ok {
-		inputs = i
+	}
+
+	if i2, ok := inputsInterface.([]string); ok {
+
+		inputs = i2
+	}
+
+	if i3, ok := inputsInterface.(*goja.Object); ok {
+		for _, k := range i3.Keys() {
+			inputs = append(inputs, i3.Get(k).String())
+		}
 	}
 
 	if i, ok := specificAnswersInterface.(string); ok {
 		specificAnswers = append(specificAnswers, i)
-	} else if i, ok := specificAnswersInterface.([]string); ok {
-		specificAnswers = i
+	}
+	if i2, ok := specificAnswersInterface.([]string); ok {
+		specificAnswers = i2
+	}
+
+	if i3, ok := specificAnswersInterface.(*goja.Object); ok {
+		for _, k := range i3.Keys() {
+			specificAnswers = append(specificAnswers, i3.Get(k).String())
+		}
 	}
 
 	var sync *sync.WaitGroup = new(sync.WaitGroup)
