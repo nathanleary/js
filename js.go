@@ -497,6 +497,7 @@ func (model *autocomplete) Learn(inputsInterface interface{}, specificAnswersInt
 
 	if i2, ok := specificAnswersInterface.([]interface{}); ok {
 		for x := 0; x < len(i2); x++ {
+			fmt.Println(reflect.TypeOf(i2[x]))
 			specificAnswers = append(specificAnswers, i2[x].(goja.Value).ToString().String())
 		}
 	}
