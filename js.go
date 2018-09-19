@@ -484,6 +484,8 @@ func (model *autocomplete) Learn(inputsInterface interface{}, specificAnswersInt
 		maxIterations = len(inputs)
 	}
 
+	sync.Add(maxIterations)
+
 	for t := 0; t < maxIterations; t++ {
 
 		input := inputs[t]
@@ -507,7 +509,6 @@ func (model *autocomplete) Learn(inputsInterface interface{}, specificAnswersInt
 
 		models = append(models, autocomplete{})
 
-		sync.Add(1)
 		go func(i int, input, specificAnswer string) {
 
 			defer sync.Done()
