@@ -462,6 +462,10 @@ func (model *autocomplete) Learn(inputsInterface interface{}, specificAnswersInt
 		inputs = append(inputs, i)
 	}
 
+	if i, ok := inputsInterface.(interface{}); ok {
+		inputs = append(inputs, cast.ToString(i))
+	}
+
 	if i2, ok := inputsInterface.([]string); ok {
 
 		inputs = i2
@@ -481,6 +485,10 @@ func (model *autocomplete) Learn(inputsInterface interface{}, specificAnswersInt
 
 	if i, ok := specificAnswersInterface.(string); ok {
 		specificAnswers = append(specificAnswers, i)
+	}
+
+	if i, ok := specificAnswersInterface.(interface{}); ok {
+		specificAnswers = append(specificAnswers, cast.ToString(i))
 	}
 
 	if i2, ok := specificAnswersInterface.([]string); ok {
