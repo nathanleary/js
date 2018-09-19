@@ -835,41 +835,138 @@ func (model *autocomplete) Remember(input string, GuessTheshold uint8) map[strin
 			if GuessTheshold > 0 {
 
 				inputhash := model.Hash(input)
+
+				exactFilePath, _ := filepath.Abs(model.dirfile + "/" + fold + "/" + hash)
+				exactFilePathDir, _ := filepath.Abs(model.dirfile + "/" + fold)
+
+				model.LoadMicro(exactFilePath, ref)
+
 				if _, ok3 := model.data[ref]; ok3 {
 					//fmt.Println(model.data[ref])
-					for inp, _ := range model.data[ref] {
-						if sug, ok := model.data[ref][inp]; ok {
-							//					fmt.Println(model.data[ref][input])
-							filepath.Walk(model.dirfile+"/"+fold+"/", func(path string, info os.FileInfo, err error) error {
-								model.LoadMicro(path, ref)
-								return nil
-							})
+					if sug, ok := model.data[ref][input]; ok {
+						//					fmt.Println(model.data[ref][input])
+						for phrase, score := range sug {
 
-							if model.HashCompare(inputhash, model.Hash(inp)) <= GuessTheshold {
+							totalScore = score + totalScore
 
-								for phrase, score := range sug {
+							if score >= bestScore {
 
-									totalScore = score + totalScore
+								bestPhrase = phrase
+								bestScore = score
 
-									if score >= bestScore {
-
-										bestPhrase = phrase
-										bestScore = score
-
-										if s, ok := scoremsi[bestPhrase]; ok {
-											scoremsi[bestPhrase] = score + s
-										} else {
-											scoremsi[bestPhrase] = score
-										}
-
-									}
-
+								if s, ok := scoremsi[bestPhrase]; ok {
+									scoremsi[bestPhrase] = score + s
+								} else {
+									scoremsi[bestPhrase] = score
 								}
+
 							}
 
 						}
+
 					}
 				}
+
+				model.Forget(ref)
+
+				if bestPhrase == "" {
+					filepath.Walk(exactFilePathDir, func(path string, info os.FileInfo, err error) error {
+
+						if path != exactFilePath {
+
+							fmt.Println(path)
+
+							model.LoadMicro(path, ref)
+
+							if _, ok3 := model.data[ref]; ok3 {
+								//fmt.Println(model.data[ref])
+								for inp, _ := range model.data[ref] {
+									if sug, ok := model.data[ref][inp]; ok {
+										//					fmt.Println(model.data[ref][input])
+
+										if model.HashCompare(inputhash, model.Hash(inp)) <= GuessTheshold {
+
+											for phrase, score := range sug {
+
+												totalScore = score + totalScore
+
+												if score >= bestScore {
+
+													bestPhrase = phrase
+													bestScore = score
+
+													if s, ok := scoremsi[bestPhrase]; ok {
+														scoremsi[bestPhrase] = score + s
+													} else {
+														scoremsi[bestPhrase] = score
+													}
+
+												}
+
+											}
+										}
+
+									}
+								}
+							}
+							model.Forget(ref)
+						}
+
+						return nil
+					})
+
+				}
+				if bestPhrase == "" {
+					filepath.Walk(model.dirfile+"/", func(foldPath string, foldPathInfo os.FileInfo, foldPathErr error) error {
+						if foldPath != exactFilePathDir {
+							fmt.Println(foldPath)
+							filepath.Walk(foldPath, func(path string, info os.FileInfo, err error) error {
+								if path != exactFilePath {
+									fmt.Println(path)
+									model.LoadMicro(path, ref)
+
+									if _, ok3 := model.data[ref]; ok3 {
+										//fmt.Println(model.data[ref])
+										for inp, _ := range model.data[ref] {
+											if sug, ok := model.data[ref][inp]; ok {
+												//					fmt.Println(model.data[ref][input])
+
+												if model.HashCompare(inputhash, model.Hash(inp)) <= GuessTheshold {
+
+													for phrase, score := range sug {
+
+														totalScore = score + totalScore
+
+														if score >= bestScore {
+
+															bestPhrase = phrase
+															bestScore = score
+
+															if s, ok := scoremsi[bestPhrase]; ok {
+																scoremsi[bestPhrase] = score + s
+															} else {
+																scoremsi[bestPhrase] = score
+															}
+
+														}
+
+													}
+												}
+
+											}
+										}
+									}
+
+									model.Forget(ref)
+								}
+								return nil
+							})
+						}
+						return nil
+					})
+
+				}
+
 			} else {
 
 				model.LoadMicro(model.dirfile+"/"+fold+"/"+hash, ref)
