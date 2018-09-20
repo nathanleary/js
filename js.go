@@ -1423,8 +1423,7 @@ func main() {
 	//	registeredJSStructs["colly.Context"] = colly.Context{}
 
 	registeredJSMethods["go"] = func(i ...interface{}) {
-		fmt.Println(reflect.TypeOf(i))
-		fmt.Println(reflect.TypeOf(i[0]))
+
 		if len(i) > 0 {
 			if m, ok := i[0].(*goja.Object); ok {
 				var vm2 *goja.Runtime = &*vm
@@ -1479,11 +1478,11 @@ func main() {
 				}()
 
 				wg.Wait()
-			} else if m, ok := i[0].(func()); ok {
+			} else if _, ok := i[0].(func()); ok {
 
 				//go m()
 
-			} else if m, ok := i[0].(func(...interface{})); ok && len(i) > 1 {
+			} else if _, ok := i[0].(func(...interface{})); ok && len(i) > 1 {
 				//fmt.Println("go 2")
 				//go m(i[1:]...)
 			}
