@@ -1416,6 +1416,47 @@ func main() {
 	//	registeredJSStructs["colly.Collector"] = colly.Collector{}
 	//	registeredJSStructs["colly.Context"] = colly.Context{}
 
+	registeredJSMethods["go"] = func(i ...interface{}) {
+
+		if len(i) > 0 {
+			if m, ok := i[0].(*goja.Object); ok {
+				var vm2 *goja.Runtime = goja.New()
+				fmt.Println(vm.RunString("this.global = this;"))
+				vm2.Set("global", vm.Get("global"))
+				//
+
+				vm2.RunString(`this['fmt'] = global['fmt'];
+				for (var ajioajsdoidajio = 0; ajioajsdoidajio < Object.keys(global).length; ajioajsdoidajio++) {
+					 if (Object.keys(global)[ajioajsdoidajio] != "global") {
+						
+						this[Object.keys(global)[ajioajsdoidajio]] = global[Object.keys(global)[ajioajsdoidajio]]
+					 } else {
+						
+					 }
+				}`)
+				args := "["
+				for x := 1; x < len(i); x++ {
+
+					if x < len(i)-1 {
+						args = args + fmt.Sprint(i[x]) + ","
+					} else {
+						args = args + fmt.Sprint(i[x])
+					}
+				}
+				args = args + "]"
+
+				go vm2.RunString("(" + fmt.Sprint(m) + "(" + args + "))(this)")
+			} else if m, ok := i[0].(func()); ok {
+				fmt.Println("go 1")
+				go m()
+			} else if m, ok := i[0].(func(...interface{})); ok && len(i) > 1 {
+				fmt.Println("go 2")
+				go m(i[1:]...)
+			}
+		}
+
+	}
+
 	registeredJSMethods["goja.New"] = goja.New
 	registeredJSMethods["colly.NewCollector"] = colly.NewCollector
 	registeredJSMethods["http.Get"] = http.Get
