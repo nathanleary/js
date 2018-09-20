@@ -65,6 +65,12 @@ func stringify(s interface{}) string {
 	return (string(fltB))
 }
 
+func jsonparse(s string) interface{} {
+	var fltB interface{}
+	json.Unmarshal([]byte(s), &fltB)
+	return fltB
+}
+
 func (model *autocomplete) Hash(data string) string {
 	return strconv.FormatUint(simhash.Simhash(simhash.NewWordFeatureSet([]byte(data))), 10)
 }
@@ -1420,20 +1426,17 @@ func main() {
 
 		if len(i) > 0 {
 			if m, ok := i[0].(*goja.Object); ok {
-				var vm2 *goja.Runtime = goja.New()
-				fmt.Println(vm.RunString("this.global = this;"))
-				vm2.Set("global", vm.Get("global"))
-				//
+				var vm2 *goja.Runtime = &*vm
 
-				vm2.RunString(`this['fmt'] = global['fmt'];
-				for (var ajioajsdoidajio = 0; ajioajsdoidajio < Object.keys(global).length; ajioajsdoidajio++) {
-					 if (Object.keys(global)[ajioajsdoidajio] != "global") {
-						
-						this[Object.keys(global)[ajioajsdoidajio]] = global[Object.keys(global)[ajioajsdoidajio]]
-					 } else {
-						
-					 }
-				}`)
+				keys, _ := vm.RunString("JSON.stringify(Object.keys(this))")
+
+				keyStrings := jsonparse(keys.String()).([]interface{})
+
+				for x := 0; x < len(keyStrings); x++ {
+
+					vm2.Set(""+cast.ToString(keyStrings[x])+"", vm.Get(cast.ToString(keyStrings[x])))
+				}
+
 				args := "["
 				for x := 1; x < len(i); x++ {
 
@@ -1444,13 +1447,42 @@ func main() {
 					}
 				}
 				args = args + "]"
+				wg := new(sync.WaitGroup)
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					vm2.RunString("(" + fmt.Sprint(m) + "(" + args + "))(this)")
+					vm2.RunString("this.global = this;")
+					vm2.RunString("this.globalkeys = Object.keys(global);")
+					vm.Set("global", vm.Get("global"))
 
-				go vm2.RunString("(" + fmt.Sprint(m) + "(" + args + "))(this)")
+					keys, _ := vm2.RunString("JSON.stringify(Object.keys(this))")
+
+					keyStrings := jsonparse(keys.String()).([]interface{})
+
+					for x := 0; x < len(keyStrings); x++ {
+
+						vm.Set(""+cast.ToString(keyStrings[x])+"", vm2.Get(cast.ToString(keyStrings[x])))
+					}
+
+					// 	vm.RunString(`
+					// for (var globalajioajsdoidajio = 0; globalajioajsdoidajio < globalkeys.length; globalajioajsdoidajio++) {
+					// 	 if (globalkeys[globalajioajsdoidajio] != "global") {
+
+					// 		this[globalkeys[globalajioajsdoidajio]] = global[globalkeys[globalajioajsdoidajio]]
+					// 	 } else {
+
+					// 	 }
+					// }`)
+
+				}()
+
+				wg.Wait()
 			} else if m, ok := i[0].(func()); ok {
-				fmt.Println("go 1")
+				//fmt.Println("go 1")
 				go m()
 			} else if m, ok := i[0].(func(...interface{})); ok && len(i) > 1 {
-				fmt.Println("go 2")
+				//fmt.Println("go 2")
 				go m(i[1:]...)
 			}
 		}
