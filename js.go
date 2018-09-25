@@ -1434,7 +1434,12 @@ func main() {
 
 				for x := 0; x < len(keyStrings); x++ {
 
-					vm2.Set(""+cast.ToString(keyStrings[x])+"", vm.Get(cast.ToString(keyStrings[x])))
+					mut.RLock()
+					val := vm.Get(cast.ToString(keyStrings[x]))
+					mut.RUnlock()
+					mut.Lock()
+					vm2.Set(""+cast.ToString(keyStrings[x])+"", val)
+					mut.Unlock()
 				}
 
 				args := "["
@@ -1454,7 +1459,6 @@ func main() {
 					vm2.RunString("(" + fmt.Sprint(m) + "(" + args + "))(this)")
 					vm2.RunString("this.global = this;")
 					vm2.RunString("this.globalkeys = Object.keys(global);")
-					vm.Set("global", vm.Get("global"))
 
 					keys, _ := vm2.RunString("JSON.stringify(Object.keys(this))")
 
@@ -1462,29 +1466,14 @@ func main() {
 
 					for x := 0; x < len(keyStrings); x++ {
 
-						vm.Set(""+cast.ToString(keyStrings[x])+"", vm2.Get(cast.ToString(keyStrings[x])))
+						val := vm2.Get(cast.ToString(keyStrings[x]))
+
+						vm.Set(""+cast.ToString(keyStrings[x])+"", val)
+
 					}
 
-					// 	vm.RunString(`
-					// for (var globalajioajsdoidajio = 0; globalajioajsdoidajio < globalkeys.length; globalajioajsdoidajio++) {
-					// 	 if (globalkeys[globalajioajsdoidajio] != "global") {
-
-					// 		this[globalkeys[globalajioajsdoidajio]] = global[globalkeys[globalajioajsdoidajio]]
-					// 	 } else {
-
-					// 	 }
-					// }`)
-
 				}()
-
 				wg.Wait()
-			} else if _, ok := i[0].(func()); ok {
-
-				//go m()
-
-			} else if _, ok := i[0].(func(...interface{})); ok && len(i) > 1 {
-				//fmt.Println("go 2")
-				//go m(i[1:]...)
 			}
 		}
 
@@ -1697,7 +1686,7 @@ func main() {
 
 	vm.Set("Time", php2go.Time)
 	vm.Set("Strtotime", php2go.Strtotime)
-	vm.Set("Date", php2go.Date)
+	// vm.Set("Date", php2go.Date)
 	vm.Set("Checkdate", php2go.Checkdate)
 	vm.Set("Sleep", php2go.Sleep)
 	vm.Set("Usleep", php2go.Usleep)
@@ -1914,7 +1903,7 @@ func main() {
 	b, e := ioutil.ReadFile(os.Args[1])
 
 	if e == nil {
-		v, err := vm.RunString(strings.Replace(string(b), strings.Split(string(b), "start-js")[0]+"start-js", "", 1))
+		v, err := vm.RunString("go(function(){ " + strings.Replace(string(b), strings.Split(string(b), "start-js")[0]+"start-js", "", 1) + ";});")
 		if err != nil {
 			fmt.Println(err, v)
 		}
