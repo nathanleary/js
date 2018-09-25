@@ -97,6 +97,14 @@ func (model *autocomplete) New(dir string) {
 
 var forgetQueue []string = []string{}
 
+func (model *autocomplete) ForgetAll(ref string) {
+
+	model.New(model.dirfile)
+
+	forgetQueue = []string{}
+
+}
+
 func (model *autocomplete) Forget(ref string) {
 
 	if len(forgetQueue) > 150 { // not sure how big the forget que should be
@@ -921,7 +929,7 @@ func (model *autocomplete) Remember(input string, GuessTheshold uint8, searchAll
 
 				inputhash := model.Hash(input)
 
-				exactFilePath, _ := filepath.Abs(model.dirfile + "/" + fold + "/" + hash + "/")
+				// exactFilePath, _ := filepath.Abs(model.dirfile + "/" + fold + "/" + hash + "/")
 				exactFilePathDir, _ := filepath.Abs(model.dirfile + "/" + fold + "/")
 
 				// model.LoadMicro(exactFilePath, ref)
@@ -955,56 +963,59 @@ func (model *autocomplete) Remember(input string, GuessTheshold uint8, searchAll
 				// model.Forget(ref)
 
 				if searchAll != true {
+					ref := ""
+
+					for t := 0; t <= 15; t++ {
+						if len(input) >= t {
+							ref = input[:t]
+						}
+					}
+
 					filepath.Walk(exactFilePathDir, func(path string, info os.FileInfo, err error) error {
-						if bestPhrase == "" {
-							path, _ = filepath.Abs(path)
-							if path != exactFilePath {
+						//if bestPhrase == "" {
 
-								//	fmt.Println(path)
-								ref := ""
+						path, _ = filepath.Abs(path)
 
-								for t := 0; t <= 15; t++ {
-									if len(input) >= t {
-										ref = input[:t]
-									}
-								}
+						//	fmt.Println(path)
 
-								model.LoadMicro(path, ref)
+						ref = model.Md5(cast.ToString(time.Now().Nanosecond) + ref)
 
-								if _, ok3 := model.data[ref]; ok3 {
-									//fmt.Println(model.data[ref])
-									for inp, _ := range model.data[ref] {
-										if sug, ok := model.data[ref][inp]; ok {
-											//					fmt.Println(model.data[ref][input])
+						model.LoadMicro(path, ref)
+						fmt.Println(model.data, ref)
+						if _, ok3 := model.data[ref]; ok3 {
 
-											if model.HashCompare(inputhash, model.Hash(inp)) <= GuessTheshold {
+							for inp, _ := range model.data[ref] {
+								if sug, ok := model.data[ref][inp]; ok {
+									//					fmt.Println(model.data[ref][input])
 
-												for phrase, score := range sug {
+									if model.HashCompare(inputhash, model.Hash(inp)) <= GuessTheshold {
 
-													totalScore = score + totalScore
+										for phrase, score := range sug {
 
-													// if score >= bestScore {
+											totalScore = score + totalScore
 
-													bestPhrase = phrase
-													bestScore = score
+											// if score >= bestScore {
 
-													if s, ok := scoremsi[bestPhrase]; ok {
-														scoremsi[bestPhrase] = score + s
-													} else {
-														scoremsi[bestPhrase] = score
-													}
+											bestPhrase = phrase
+											bestScore = score
 
-													// }
-
-												}
+											if s, ok := scoremsi[bestPhrase]; ok {
+												scoremsi[bestPhrase] = score + s
+											} else {
+												scoremsi[bestPhrase] = score
 											}
+
+											// }
 
 										}
 									}
+
 								}
-								model.Forget(ref)
 							}
 						}
+						model.Forget(ref)
+
+						//}
 
 						return nil
 					})
@@ -1080,20 +1091,23 @@ func (model *autocomplete) Remember(input string, GuessTheshold uint8, searchAll
 				// }
 
 				if searchAll == true {
+
+					ref := ""
+
+					for t := 0; t <= 15; t++ {
+						if len(input) >= t {
+							ref = input[:t]
+						}
+					}
+
 					filepath.Walk(model.dirfile+"/", func(foldPath string, foldPathInfo os.FileInfo, foldPathErr error) error {
 
 						//fmt.Println(foldPath)
 						filepath.Walk(foldPath, func(path string, info os.FileInfo, err error) error {
 
-							ref := ""
-
-							for t := 0; t <= 15; t++ {
-								if len(input) >= t {
-									ref = input[:t]
-								}
-							}
-
 							//	fmt.Println(path)
+							ref = model.Md5(cast.ToString(time.Now().Nanosecond) + ref)
+
 							model.LoadMicro(path, ref)
 
 							if _, ok3 := model.data[ref]; ok3 {
